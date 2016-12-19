@@ -17,6 +17,10 @@
 #   all nodes go down. (There is no election)
 #   Defaults to $::fqdn
 #
+# [*bootstrap_command*]
+#   (optional) Command used to bootstrap the galera cluster
+#   Defaults to $::galera::params::bootstrap_command
+#
 # [*local_ip*]
 #   (optional) The IP address of this node to use for comms
 #   Defaults to $::ipaddress_eth1
@@ -172,6 +176,7 @@
 class galera(
   $galera_servers                   = [$::ipaddress_eth1],
   $galera_master                    = $::fqdn,
+  $bootstrap_command                = $::galera::params::bootstrap_command,
   $local_ip                         = $::ipaddress_eth1,
   $bind_address                     = $::ipaddress_eth1,
   $mysql_port                       = 3306,
@@ -207,7 +212,7 @@ class galera(
   $status_log_on_success_operator   = '=',
   $status_log_on_success            = '',
   $status_log_on_failure            = undef,
-)
+) inherits galera::params
 {
   if $configure_repo {
     include galera::repo
@@ -230,8 +235,6 @@ class galera(
   if $validate_connection {
     include galera::validate
   }
-
-  include galera::params
 
   $options = mysql_deepmerge($galera::params::default_options, $override_options)
 
@@ -318,7 +321,7 @@ class galera(
     }
 
     exec { 'bootstrap_galera_cluster':
-      command  => $galera::params::bootstrap_command,
+      command  => $bootstrap_command,
       unless   => "nmap -p ${wsrep_group_comm_port} ${server_list} | grep -q '${wsrep_group_comm_port}/tcp open'",
       require  => Class['mysql::server::installdb'],
       before   => Service['mysqld'],
