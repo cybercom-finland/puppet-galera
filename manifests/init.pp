@@ -256,7 +256,7 @@ class galera(
     }
   }
 
-  $options = mysql_deepmerge($galera::params::default_options, $_wsrep_cluster_address, $override_options)
+  $options = mysql::normalise_and_deepmerge($galera::params::default_options, $_wsrep_cluster_address, $override_options)
 
   if ($create_root_user == undef) {
     if ($galera_master == $::fqdn) {
